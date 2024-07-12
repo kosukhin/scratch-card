@@ -1,6 +1,9 @@
 "use strict";
 
-const commonOf = (classRef) => (...args) => new classRef(...args)
+const commonOf =
+  (classRef) =>
+  (...args) =>
+    new classRef(...args);
 
 // --- Рендеринг на канвас ---
 /**
@@ -29,7 +32,9 @@ class Canvas {
 
   context() {
     if (!this.#context) {
-      this.#context = this.element().getContext("2d", { willReadFrequently: true });
+      this.#context = this.element().getContext("2d", {
+        willReadFrequently: true,
+      });
     }
 
     return this.#context;
@@ -49,7 +54,7 @@ class CanvasObject {
   }
 
   render() {
-    console.log('nothing to render');
+    console.log("nothing to render");
   }
 
   position() {
@@ -92,7 +97,7 @@ class Rect extends CanvasObject {
    * @param {number} top
    * @param {number} left
    */
-  constructor(width, height, top, left, color = 'black') {
+  constructor(width, height, top, left, color = "black") {
     super(top, left);
     this.#color = color;
     this.#width = width;
@@ -103,6 +108,26 @@ class Rect extends CanvasObject {
     const ctx = canvas.context();
     ctx.fillStyle = this.#color;
     ctx.fillRect(this._left, this._top, this.#width, this.#height);
+  }
+}
+
+class Circle extends CanvasObject {
+  static of = commonOf(Circle);
+  #radius;
+  #color;
+
+  constructor(radius, top, left, color = 'black') {
+    super(top, left);
+    this.#radius = radius;
+    this.#color = color;
+  }
+
+  render(canvas) {
+    const ctx = canvas.context();
+    ctx.beginPath();
+    ctx.arc(this._left, this._top, this.#radius, 0, 2 * Math.PI, false);
+    ctx.fillStyle = this.#color;
+    ctx.fill();
   }
 }
 
@@ -133,13 +158,12 @@ class Scene {
   }
 
   removeObject(object) {
-    this.#canvasObjects.delete(object)
+    this.#canvasObjects.delete(object);
   }
 
   render() {
     const ctx = this.#canvas.context();
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    console.log(Array.from(this.#canvasObjects));
     const objectsIterator = this.#canvasObjects[Symbol.iterator]();
     for (const [object] of objectsIterator) {
       object.render(this.#canvas);
@@ -169,7 +193,7 @@ class Ticker {
     requestAnimationFrame(() => {
       this.#tickFn();
       setTimeout(this.run.bind(this), this.#delayMs);
-    })
+    });
   }
 }
 
@@ -189,7 +213,7 @@ class RemoveAfterDelay extends CanvasObject {
    * @param {number} removeDelay
    */
   constructor(targetObject, scene, removeDelay) {
-    super(...targetObject.position())
+    super(...targetObject.position());
     this.#targetObject = targetObject;
     this.#removeDelay = removeDelay;
     this.#scene = scene;
@@ -228,7 +252,7 @@ class FallAnimation extends CanvasObject {
    * @param {number} distancePerTick
    */
   constructor(targetObject, ticker, distancePerTick = 16) {
-    super(...targetObject.position())
+    super(...targetObject.position());
     this.#targetObject = targetObject;
     this.#distancePerTick = distancePerTick;
     this.#ticker = ticker;
@@ -239,7 +263,7 @@ class FallAnimation extends CanvasObject {
     this.#targetObject.move(
       (top) => top + tickerDelayMs / this.#distancePerTick,
       (left) => left
-    )
+    );
     this.#targetObject.render(canvas);
     return this;
   }
@@ -304,10 +328,10 @@ class CanvasEvent {
    */
   watchEvent(adapter) {
     this.#canvas.element().addEventListener(this.#eventName, (event) => {
-      this.#handlers.forEach(handler => {
+      this.#handlers.forEach((handler) => {
         handler.do(adapter.adapted(event));
-      })
-    })
+      });
+    });
     return this;
   }
 }
@@ -328,6 +352,31 @@ class Handler {
   }
 }
 
+class Range {
+  static of = commonOf(Range);
+  #from;
+  #to;
+
+  /**
+   *
+   * @param {number} from
+   * @param {number} to
+   */
+  constructor(from, to) {
+    this.#from = from;
+    this.#to = to;
+  }
+
+  array() {
+    const result = [];
+    for (let i = this.#from; i <= this.#to; i++) {
+      result.push(i);
+    }
+
+    return result;
+  }
+}
+
 // !-- Общее управление событиями ---
 
 // !-- Более сложные групповые элементы ---
@@ -336,6 +385,10 @@ class Sand extends CanvasObject {
   static of = commonOf(Sand);
   #ticker;
   #scene;
+  #size = 1;
+  #width = 50;
+  #removeDelay = 500;
+  #colors = ['#222', '#444', '#666', '#888', '#aaa', '#ccc']
 
   constructor(ticker, scene, top, left) {
     super(top, left);
@@ -344,16 +397,47 @@ class Sand extends CanvasObject {
   }
 
   render() {
-    [10, 50, 100, 150, 200].forEach((delay) => {
-      setTimeout(() => {
-        const rect = Rect.of(10, 10, this._top, this._left, 'orange');
-        const fallingRect = FallAnimation.of(rect, this.#ticker, 8);
-        const removable  = RemoveAfterDelay.of(fallingRect, this.#scene, 3000);
-        this.#scene.addObject(removable)
-      }, delay * 10)
-    });
+    const speed = 4;
+    const dist = 30;
+    this.#renderStream(10, dist, speed);
+    this.#renderStream(10, dist, speed);
+    this.#renderStream(10, dist, speed);
+    this.#renderStream(10, dist, speed);
+    this.#renderStream(10, dist, speed);
     this.#scene.removeObject(this);
 
     return this;
+  }
+
+  #renderStream(parts, partsDelay, speedRange) {
+    let nextDelay = 0;
+    const delays = Range.of(1, parts)
+      .array()
+      .map((item) => {
+        const result = nextDelay + Math.random() * partsDelay;
+        nextDelay += partsDelay;
+        return result;
+      });
+    delays.forEach((delay) => {
+      setTimeout(() => {
+        const rect = Circle.of(
+          1 + Math.random() * this.#size,
+          this._top,
+          this._left + Math.random() * this.#width,
+          this.#colors[Math.floor(Math.random() * this.#colors.length)]
+        );
+        const fallingRect = FallAnimation.of(
+          rect,
+          this.#ticker,
+          speedRange + Math.random() + speedRange
+        );
+        const removable = RemoveAfterDelay.of(
+          fallingRect,
+          this.#scene,
+          this.#removeDelay + Math.random() * this.#removeDelay
+        );
+        this.#scene.addObject(removable);
+      }, delay * 10);
+    });
   }
 }
