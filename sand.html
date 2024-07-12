@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        canvas {
+            background: #ccc;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas" width="500" height="500"></canvas>
+    <script src="./classes.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        const fps = FPS.of(60);
+        const canvas = Canvas.of('#canvas');
+        const scene = Scene.of(canvas);
+        const ticker = Ticker.of(fps.ms(), scene.render.bind(scene));
+
+        const canvasClickHandler = Handler.of((pointer) => {
+            const sand = Sand.of(ticker, scene, ...pointer.offset());
+            scene.addObject(sand);
+        });
+
+        const canvasClickEvent = CanvasEvent.of(canvas, 'click', [canvasClickHandler]);
+        canvasClickEvent.watchEvent(FnAdapter.of(Pointer.of));
+
+        ticker.run();
+    </script>
+</body>
+
+</html>

@@ -25,11 +25,16 @@ const drawCanvasImageRotated = (
   inDrawOptions = {}
 ) => {
   inBuildImageFn().then((image) => {
-    inCanvasCtx.save();
-    inCanvasCtx.translate(inDrawOptions.left, inDrawOptions.top);
     const degrees = inDrawOptions.degrees ?? 0;
-    inCanvasCtx.rotate((degrees * Math.PI) / 180);
-    inCanvasCtx.drawImage(image, 0, 0);
+    const x = inDrawOptions.left;
+    const y = inDrawOptions.top;
+    const w = inDrawOptions.width;
+    const h = inDrawOptions.height;
+    inCanvasCtx.save();
+    inCanvasCtx.translate(x+w/2, y+h/2);
+    inCanvasCtx.rotate(degrees*Math.PI/180.0);
+    inCanvasCtx.translate(-x-w/2, -y-h/2);
+    inCanvasCtx.drawImage(image, x, y, w, h);
     inCanvasCtx.restore();
   });
 };
@@ -181,7 +186,7 @@ const scratchMoveHandler = throttle((inOptions, inEvent) => {
           left: position.x - image.width / 2,
           width: image.width,
           height: image.height,
-          degrees: Math.floor(Math.random() * 30),
+          degrees: Math.floor(Math.random() * 359),
         }
       );
     });
