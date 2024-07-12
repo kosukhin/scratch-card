@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scratch card example</title>
+    <style>
+        body {
+            height: 100dvh;
+            align-items: center;
+            justify-content: center;
+            display: flex;
+        }
+
+        .the-card {
+            height: 300px;
+            padding: 0;
+            margin: 0;
+            border-radius: 10px;
+            background: url('https://static21.tgcnt.ru/posts/_0/f3/f3f58106d306deeda386982ab001d142.jpg') center center no-repeat #000;
+            background-size: contain;
+            border: solid 2px #333;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="the-card">
+        <canvas class="the-card-canvas" width="450" height="300"></canvas>
+    </div>
+    <script src="./classes.js" type="text/javascript"></script>
+    <script src="./index.js" type="text/javascript"></script>
+</body>
+
+</html>
