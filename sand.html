@@ -22,7 +22,14 @@
         const ticker = Ticker.of(fps.ms(), scene.render.bind(scene));
 
         const canvasClickHandler = Handler.of((pointer) => {
-            const sand = Sand.of(ticker, scene, ...pointer.offset());
+            const sand = Sand.of(
+                RandomNumber.of(1, 10),
+                4,
+                50,
+                ticker,
+                scene,
+                ...pointer.offset()
+            );
             scene.addObject(sand);
         });
 

@@ -68,6 +68,84 @@ class CanvasObject {
   }
 }
 
+class BinaryOperation {
+  _operandOne;
+  _operandTwo;
+
+  constructor(operandOne, operandTwo) {
+    this._operandOne = Number(operandOne);
+    this._operandTwo = Number(operandTwo);
+  }
+}
+
+class UnaryOperation {
+  _operand;
+
+  constructor(operand) {
+    this._operand = operand;
+  }
+}
+
+class RandomNumber extends BinaryOperation {
+  static of = commonOf(RandomNumber);
+
+  valueOf() {
+    return this._operandOne + Math.random() * this._operandTwo;
+  }
+}
+
+class RoundNumber extends UnaryOperation {
+  static of = commonOf(RoundNumber);
+
+  valueOf() {
+    return Math.round(this._operand);
+  }
+}
+
+class FloorNumber extends UnaryOperation {
+  static of = commonOf(FloorNumber);
+
+  valueOf() {
+    return Math.floor(this._operand);
+  }
+}
+
+class BottomLimitNumber extends BinaryOperation {
+  static of = commonOf(BottomLimitNumber);
+
+  constructor(limit, value) {
+    super(limit, value);
+  }
+
+  valueOf() {
+    return this._operandTwo < this._operandOne ? this.operandOne : this._operandTwo;
+  }
+}
+
+class Division extends BinaryOperation {
+  static of = commonOf(Division);
+
+  valueOf() {
+    return this._operandOne / this._operandTwo;
+  }
+}
+
+class Sum extends BinaryOperation {
+  static of = commonOf(Sum);
+
+  valueOf() {
+    return this._operandOne + this._operandTwo;
+  }
+}
+
+class Mul extends BinaryOperation {
+  static of = commonOf(Mul);
+
+  valueOf() {
+    return this._operandOne * this._operandTwo;
+  }
+}
+
 class FPS {
   static of = commonOf(FPS);
   #fps;
@@ -352,6 +430,14 @@ class Handler {
   }
 }
 
+class Timeout extends Handler {
+  static of = commonOf(Timeout);
+
+  constructor(fn, delay) {
+    super(setTimeout.bind(null, fn, delay))
+  }
+}
+
 class Range {
   static of = commonOf(Range);
   #from;
@@ -389,21 +475,25 @@ class Sand extends CanvasObject {
   #width = 50;
   #removeDelay = 500;
   #colors = ['#222', '#444', '#666', '#888', '#aaa', '#ccc']
+  #partsCount = 10;
+  #streamsCount = 1;
 
-  constructor(ticker, scene, top, left) {
+  constructor(partsCount, streamsCount, width, ticker, scene, top, left) {
     super(top, left);
+    this.#width = width;
     this.#ticker = ticker;
     this.#scene = scene;
+    this.#partsCount = partsCount;
+    this.#streamsCount = streamsCount;
   }
 
   render() {
     const speed = 4;
     const dist = 30;
-    this.#renderStream(10, dist, speed);
-    this.#renderStream(10, dist, speed);
-    this.#renderStream(10, dist, speed);
-    this.#renderStream(10, dist, speed);
-    this.#renderStream(10, dist, speed);
+    const partsForStream = RoundNumber.of(Division.of(this.#partsCount, this.#streamsCount));
+    Range.of(1, this.#streamsCount).array().forEach(() => {
+      this.#renderStream(partsForStream, dist, speed);
+    })
     this.#scene.removeObject(this);
 
     return this;
@@ -413,31 +503,31 @@ class Sand extends CanvasObject {
     let nextDelay = 0;
     const delays = Range.of(1, parts)
       .array()
-      .map((item) => {
-        const result = nextDelay + Math.random() * partsDelay;
+      .map(() => {
+        const result = Sum.of(nextDelay, RandomNumber.of(0, partsDelay));
         nextDelay += partsDelay;
         return result;
       });
     delays.forEach((delay) => {
-      setTimeout(() => {
-        const rect = Circle.of(
-          1 + Math.random() * this.#size,
+      Timeout.of(() => {
+        const figure = Circle.of(
+          RandomNumber.of(1, this.#size),
           this._top,
-          this._left + Math.random() * this.#width,
-          this.#colors[Math.floor(Math.random() * this.#colors.length)]
+          Sum.of(this._left, RandomNumber.of(0, this.#width)),
+          this.#colors[FloorNumber.of(RandomNumber.of(0, this.#colors.length))]
         );
         const fallingRect = FallAnimation.of(
-          rect,
+          figure,
           this.#ticker,
-          speedRange + Math.random() + speedRange
+          RandomNumber.of(speedRange, Mul.of(speedRange, 2))
         );
         const removable = RemoveAfterDelay.of(
           fallingRect,
           this.#scene,
-          this.#removeDelay + Math.random() * this.#removeDelay
+          RandomNumber.of(this.#removeDelay, this.#removeDelay * 2)
         );
         this.#scene.addObject(removable);
-      }, delay * 10);
+      }, Mul.of(delay, 10)).do();
     });
   }
 }
