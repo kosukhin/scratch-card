@@ -31,9 +31,9 @@ const drawCanvasImageRotated = (
     const w = inDrawOptions.width;
     const h = inDrawOptions.height;
     inCanvasCtx.save();
-    inCanvasCtx.translate(x+w/2, y+h/2);
-    inCanvasCtx.rotate(degrees*Math.PI/180.0);
-    inCanvasCtx.translate(-x-w/2, -y-h/2);
+    inCanvasCtx.translate(x + w / 2, y + h / 2);
+    inCanvasCtx.rotate((degrees * Math.PI) / 180.0);
+    inCanvasCtx.translate(-x - w / 2, -y - h / 2);
     inCanvasCtx.drawImage(image, x, y, w, h);
     inCanvasCtx.restore();
   });
@@ -154,10 +154,11 @@ const scratchPercentReachedHandler = throttle((inOptions) => {
   return null;
 }, 100);
 
-const renderDustAnimation = throttle(() => {
-  console.log('dust');
-}, 500)
+const renderDustAnimation = throttle((afterDust) => {
+  afterDust();
+}, 16);
 
+let lastClearPercent = 0;
 const scratchMoveHandler = throttle((inOptions, inEvent) => {
   inEvent.stopImmediatePropagation();
   inEvent.preventDefault();
@@ -166,14 +167,8 @@ const scratchMoveHandler = throttle((inOptions, inEvent) => {
       return images[Math.floor(Math.random() * images.length)];
     }, 3000)
   );
-  let lastClearPercent = 0;
 
   requestAnimationFrame(() => {
-    const inPercent = scratchPercentReachedHandler(inOptions);
-    if (lastClearPercent !== inPercent) {
-      renderDustAnimation();
-    }
-
     inOptions.canvasCtx.globalCompositeOperation = "destination-out";
     inOptions.canvasCtx.save();
     const position = buildPositionFromEvent(inEvent);
@@ -189,6 +184,15 @@ const scratchMoveHandler = throttle((inOptions, inEvent) => {
           degrees: Math.floor(Math.random() * 359),
         }
       );
+
+      const inPercent = scratchPercentReachedHandler(inOptions);
+      if (lastClearPercent !== inPercent) {
+        const diffPercent = inPercent - lastClearPercent;
+        renderDustAnimation(() => {
+          inOptions.dustHandler(diffPercent, {width: image.width, height: image.height}, position)
+          lastClearPercent = inPercent;
+        });
+      }
     });
     inOptions.canvasCtx.restore();
   });
@@ -260,6 +264,12 @@ const once = (inFn) => {
 };
 
 // Клиентский код
+const fps = FPS.of(60);
+const canvas = Canvas.of(".the-dust-canvas");
+const scene = Scene.of(canvas);
+const ticker = Ticker.of(fps.ms(), scene.render.bind(scene));
+ticker.run();
+
 scratch({
   canvasElement: document.querySelector(".the-card-canvas"),
   image: "https://placehold.co/450x300/31343C/EEE",
@@ -268,6 +278,22 @@ scratch({
     console.log("percent reached", percent);
     console.log("Вы выиграли!");
   }),
+  dustHandler: (percent, imageSize, position) => {
+    if (!percent) {
+      return;
+    }
+
+    const sand = Sand.of(
+      percent + 5,
+      4,
+      imageSize.width,
+      ticker,
+      scene,
+      position.y + imageSize.height / 2,
+      position.x
+  );
+  scene.addObject(sand);
+  },
   scratchImages: Promise.all([
     // loadImageByUrl("./rect.svg"),
 
