@@ -189,7 +189,11 @@ const scratchMoveHandler = throttle((inOptions, inEvent) => {
       if (lastClearPercent !== inPercent) {
         const diffPercent = inPercent - lastClearPercent;
         renderDustAnimation(() => {
-          inOptions.dustHandler(diffPercent, {width: image.width, height: image.height}, position)
+          inOptions.dustHandler(
+            diffPercent,
+            { width: image.width, height: image.height },
+            position
+          );
           lastClearPercent = inPercent;
         });
       }
@@ -270,6 +274,7 @@ const scene = Scene.of(canvas);
 const ticker = Ticker.of(fps.ms(), scene.render.bind(scene));
 ticker.run();
 
+const sandColors = ["#222", "#444", "#666", "#888"];
 scratch({
   canvasElement: document.querySelector(".the-card-canvas"),
   image: "https://placehold.co/450x300/31343C/EEE",
@@ -284,16 +289,18 @@ scratch({
     }
 
     const sand = Sand.of(
-      ['#222', '#444', '#666', '#888'],
+      SandStream.of(
+        sandColors,
+        imageSize.width,
+        ticker,
+        scene,
+        position.y - imageSize.height / 2,
+        position.x
+      ),
       percent * 3,
-      4,
-      imageSize.width,
-      ticker,
-      scene,
-      position.y - imageSize.height / 2,
-      position.x
-  );
-  scene.addObject(sand);
+      4
+    );
+    scene.addObject(sand);
   },
   scratchImages: Promise.all([
     // loadImageByUrl("./rect.svg"),
