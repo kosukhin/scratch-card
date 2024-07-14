@@ -156,7 +156,7 @@ const scratchPercentReachedHandler = throttle((inOptions) => {
 
 const renderDustAnimation = throttle((afterDust) => {
   afterDust();
-}, 16);
+}, 48);
 
 let lastClearPercent = 0;
 const scratchMoveHandler = throttle((inOptions, inEvent) => {
@@ -284,12 +284,13 @@ scratch({
     }
 
     const sand = Sand.of(
-      percent + 5,
+      ['#222', '#444', '#666', '#888'],
+      percent * 3,
       4,
       imageSize.width,
       ticker,
       scene,
-      position.y + imageSize.height / 2,
+      position.y - imageSize.height / 2,
       position.x
   );
   scene.addObject(sand);

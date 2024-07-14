@@ -62,26 +62,42 @@ class CanvasObject {
   }
 
   move(newTopFn, newLeftFn) {
-    this._top = newTopFn(this._top);
-    this._left = newLeftFn(this._left);
+    this._top = newTopFn(this._top, this._left);
+    this._left = newLeftFn(this._left, this._top);
     return this;
   }
 }
 
-class BinaryOperation {
+class PrimitiveAware {
+  computeValue() {
+    throw Error("not implemented!");
+  }
+
+  valueOf() {
+    return this.computeValue();
+  }
+
+  toString() {
+    return this.computeValue();
+  }
+}
+
+class BinaryOperation extends PrimitiveAware {
   _operandOne;
   _operandTwo;
 
   constructor(operandOne, operandTwo) {
+    super();
     this._operandOne = Number(operandOne);
     this._operandTwo = Number(operandTwo);
   }
 }
 
-class UnaryOperation {
+class UnaryOperation extends PrimitiveAware {
   _operand;
 
   constructor(operand) {
+    super();
     this._operand = operand;
   }
 }
@@ -89,7 +105,7 @@ class UnaryOperation {
 class RandomNumber extends BinaryOperation {
   static of = commonOf(RandomNumber);
 
-  valueOf() {
+  computeValue() {
     return this._operandOne + Math.random() * this._operandTwo;
   }
 }
@@ -97,7 +113,7 @@ class RandomNumber extends BinaryOperation {
 class RoundNumber extends UnaryOperation {
   static of = commonOf(RoundNumber);
 
-  valueOf() {
+  computeValue() {
     return Math.round(this._operand);
   }
 }
@@ -105,7 +121,7 @@ class RoundNumber extends UnaryOperation {
 class FloorNumber extends UnaryOperation {
   static of = commonOf(FloorNumber);
 
-  valueOf() {
+  computeValue() {
     return Math.floor(this._operand);
   }
 }
@@ -117,15 +133,17 @@ class BottomLimitNumber extends BinaryOperation {
     super(limit, value);
   }
 
-  valueOf() {
-    return this._operandTwo < this._operandOne ? this.operandOne : this._operandTwo;
+  computeValue() {
+    return this._operandTwo < this._operandOne
+      ? this.operandOne
+      : this._operandTwo;
   }
 }
 
 class Division extends BinaryOperation {
   static of = commonOf(Division);
 
-  valueOf() {
+  computeValue() {
     return this._operandOne / this._operandTwo;
   }
 }
@@ -133,7 +151,7 @@ class Division extends BinaryOperation {
 class Sum extends BinaryOperation {
   static of = commonOf(Sum);
 
-  valueOf() {
+  computeValue() {
     return this._operandOne + this._operandTwo;
   }
 }
@@ -141,7 +159,7 @@ class Sum extends BinaryOperation {
 class Mul extends BinaryOperation {
   static of = commonOf(Mul);
 
-  valueOf() {
+  computeValue() {
     return this._operandOne * this._operandTwo;
   }
 }
@@ -194,7 +212,7 @@ class Circle extends CanvasObject {
   #radius;
   #color;
 
-  constructor(radius, top, left, color = 'black') {
+  constructor(radius, top, left, color = "black") {
     super(top, left);
     this.#radius = radius;
     this.#color = color;
@@ -311,6 +329,48 @@ class RemoveAfterDelay extends CanvasObject {
       this.#scene.removeObject(this);
     }
 
+    return this;
+  }
+}
+
+class FallParabolicAnimation extends CanvasObject {
+  static of = commonOf(FallParabolicAnimation);
+  #targetObject;
+  #distancePerTick;
+  #ticker;
+  #initialTop;
+  #parabolicConstant;
+
+  /**
+   * @param {CanvasObject} targetObject
+   * @param {Ticker} ticker
+   * @param {number} distancePerTick
+   */
+  constructor(
+    targetObject,
+    ticker,
+    distancePerTick = 16,
+    parabolicConstant = 10
+  ) {
+    super(...targetObject.position());
+    this.#targetObject = targetObject;
+    this.#distancePerTick = distancePerTick;
+    this.#ticker = ticker;
+    this.#initialTop = this._top;
+    this.#parabolicConstant = parabolicConstant;
+  }
+
+  render(canvas) {
+    const tickerDelayMs = this.#ticker.delayMs();
+    const nextStep = tickerDelayMs / this.#distancePerTick;
+    this.#targetObject.move(
+      (top) => top + nextStep,
+      (left, top) => {
+        const deltaFromInitial = top - this.#initialTop;
+        return left + (this.#parabolicConstant * 2) / deltaFromInitial;
+      }
+    );
+    this.#targetObject.render(canvas);
     return this;
   }
 }
@@ -434,7 +494,7 @@ class Timeout extends Handler {
   static of = commonOf(Timeout);
 
   constructor(fn, delay) {
-    super(setTimeout.bind(null, fn, delay))
+    super(setTimeout.bind(null, fn, delay));
   }
 }
 
@@ -474,12 +534,22 @@ class Sand extends CanvasObject {
   #size = 1;
   #width = 50;
   #removeDelay = 500;
-  #colors = ['#222', '#444', '#666', '#888', '#aaa', '#ccc']
+  #colors = ["#222"];
   #partsCount = 10;
   #streamsCount = 1;
 
-  constructor(partsCount, streamsCount, width, ticker, scene, top, left) {
+  constructor(
+    colors,
+    partsCount,
+    streamsCount,
+    width,
+    ticker,
+    scene,
+    top,
+    left
+  ) {
     super(top, left);
+    this.#colors = colors;
     this.#width = width;
     this.#ticker = ticker;
     this.#scene = scene;
@@ -490,10 +560,14 @@ class Sand extends CanvasObject {
   render() {
     const speed = 4;
     const dist = 30;
-    const partsForStream = RoundNumber.of(Division.of(this.#partsCount, this.#streamsCount));
-    Range.of(1, this.#streamsCount).array().forEach(() => {
-      this.#renderStream(partsForStream, dist, speed);
-    })
+    const partsForStream = RoundNumber.of(
+      Division.of(this.#partsCount, this.#streamsCount)
+    );
+    Range.of(1, this.#streamsCount)
+      .array()
+      .forEach(() => {
+        this.#renderStream(partsForStream, dist, speed);
+      });
     this.#scene.removeObject(this);
 
     return this;
@@ -516,10 +590,11 @@ class Sand extends CanvasObject {
           Sum.of(this._left, RandomNumber.of(0, this.#width)),
           this.#colors[FloorNumber.of(RandomNumber.of(0, this.#colors.length))]
         );
-        const fallingRect = FallAnimation.of(
+        const fallingRect = FallParabolicAnimation.of(
           figure,
           this.#ticker,
-          RandomNumber.of(speedRange, Mul.of(speedRange, 2))
+          RandomNumber.of(speedRange, Mul.of(speedRange, 2)),
+          Mul.of(RandomNumber.of(-1, 2), 16)
         );
         const removable = RemoveAfterDelay.of(
           fallingRect,

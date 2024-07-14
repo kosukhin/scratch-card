@@ -22,15 +22,15 @@
         const ticker = Ticker.of(fps.ms(), scene.render.bind(scene));
 
         const canvasClickHandler = Handler.of((pointer) => {
-            const sand = Sand.of(
-                30,
-                4,
-                50,
-                ticker,
-                scene,
-                ...pointer.offset()
-            );
-            scene.addObject(sand);
+            const rect = Rect.of(30, 30, ...pointer.offset(), 'orange');
+            const fallingRect = FallParabolicAnimation.of(
+                rect,
+                 ticker,
+                  8,
+                  Mul.of(RandomNumber.of(-1, 2), 32),
+                );
+            const removable  = RemoveAfterDelay.of(fallingRect, scene, 3000);
+            scene.addObject(removable);
         });
 
         const canvasClickEvent = CanvasEvent.of(canvas, 'click', [canvasClickHandler]);
