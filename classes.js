@@ -5,10 +5,6 @@ const commonOf =
   (...args) =>
     new classRef(...args);
 
-// --- Рендеринг на канвас ---
-/**
- * Представитель канвы
- */
 class Canvas {
   static of = commonOf(Canvas);
   #element;
@@ -41,9 +37,6 @@ class Canvas {
   }
 }
 
-/**
- * Представитель базового объекта канвы
- */
 class CanvasObject {
   _top;
   _left;
@@ -177,9 +170,6 @@ class FPS {
   }
 }
 
-/**
- * Представитель квадрата
- */
 class Rect extends CanvasObject {
   static of = commonOf(Rect);
   #width;
@@ -227,9 +217,6 @@ class Circle extends CanvasObject {
   }
 }
 
-/**
- * Решает задачу сбора объектов
- */
 class Scene {
   static of = commonOf(Scene);
   #canvasObjects;
@@ -268,9 +255,6 @@ class Scene {
   }
 }
 
-/**
- * Представитель логики инициации рендеринга 1ого фрейма
- */
 class Ticker {
   static of = commonOf(Ticker);
   #delayMs;
@@ -293,9 +277,6 @@ class Ticker {
   }
 }
 
-/**
- * Представление для логики удаления объекта спустя время.
- */
 class RemoveAfterDelay extends CanvasObject {
   static of = commonOf(RemoveAfterDelay);
   #targetObject;
@@ -375,9 +356,6 @@ class FallParabolicAnimation extends CanvasObject {
   }
 }
 
-/**
- * Представитель объекта, который падает
- */
 class FallAnimation extends CanvasObject {
   static of = commonOf(FallAnimation);
   #targetObject;
@@ -407,10 +385,6 @@ class FallAnimation extends CanvasObject {
   }
 }
 
-// --- Общее управление событиями ---
-/**
- * Представление устройства указателя
- */
 class Pointer {
   static of = commonOf(Pointer);
   #originalEvent;
@@ -424,9 +398,6 @@ class Pointer {
   }
 }
 
-/**
- * Представление адаптера на основе функции
- */
 class FnAdapter {
   static of = commonOf(FnAdapter);
   #fn;
@@ -440,13 +411,19 @@ class FnAdapter {
   }
 }
 
-/**
- * Представление события на канвасе
- */
 class CanvasEvent {
   static of = commonOf(CanvasEvent);
+  /**
+   * @type {Function[]}
+   */
   #handlers;
+  /**
+   * @type {Canvas}
+   */
   #canvas;
+  /**
+   * @type {string}
+   */
   #eventName;
 
   /**
@@ -474,13 +451,13 @@ class CanvasEvent {
   }
 }
 
-/**
- * Представление обработчика на основе функции
- */
 class Handler {
   static of = commonOf(Handler);
   #fn;
 
+  /**
+   * @param {Function} fn
+   */
   constructor(fn) {
     this.#fn = fn;
   }
@@ -493,6 +470,10 @@ class Handler {
 class Timeout extends Handler {
   static of = commonOf(Timeout);
 
+  /**
+   * @param {Function} fn
+   * @param {number} delay
+   */
   constructor(fn, delay) {
     super(setTimeout.bind(null, fn, delay));
   }
@@ -500,7 +481,13 @@ class Timeout extends Handler {
 
 class Range {
   static of = commonOf(Range);
+  /**
+   * @type {number}
+   */
   #from;
+  /**
+   * @type {number}
+   */
   #to;
 
   /**
@@ -523,25 +510,43 @@ class Range {
   }
 }
 
-// !-- Общее управление событиями ---
-
-// !-- Более сложные групповые элементы ---
-
-class Sand extends CanvasObject {
-  static of = commonOf(Sand);
-  #ticker;
-  #scene;
+class SandStream extends CanvasObject {
+  static of = commonOf(SandStream);
+  /**
+   * @type {number}
+   */
   #size = 1;
+  /**
+   * @type {number}
+   */
   #width = 50;
+  /**
+   * @type {Ticker}
+   */
+  #ticker;
+  /**
+   * @type {Scene}
+   */
+  #scene;
+  /**
+   * @type {number}
+   */
   #removeDelay = 500;
+  /**
+   * @type {string[]}
+   */
   #colors = ["#222"];
-  #partsCount = 10;
-  #streamsCount = 1;
 
+  /**
+   * @param {string[]} colors
+   * @param {number} width
+   * @param {Ticker} ticker
+   * @param {Scene} scene
+   * @param {number} top
+   * @param {number} left
+   */
   constructor(
     colors,
-    partsCount,
-    streamsCount,
     width,
     ticker,
     scene,
@@ -553,27 +558,18 @@ class Sand extends CanvasObject {
     this.#width = width;
     this.#ticker = ticker;
     this.#scene = scene;
-    this.#partsCount = partsCount;
-    this.#streamsCount = streamsCount;
   }
 
-  render() {
-    const speed = 4;
-    const dist = 30;
-    const partsForStream = RoundNumber.of(
-      Division.of(this.#partsCount, this.#streamsCount)
-    );
-    Range.of(1, this.#streamsCount)
-      .array()
-      .forEach(() => {
-        this.#renderStream(partsForStream, dist, speed);
-      });
-    this.#scene.removeObject(this);
-
-    return this;
+  scene() {
+    return this.#scene;
   }
 
-  #renderStream(parts, partsDelay, speedRange) {
+  /**
+   * @param {number} parts
+   * @param {number} partsDelay
+   * @param {number} speedRange
+   */
+  render(parts, partsDelay, speedRange) {
     let nextDelay = 0;
     const delays = Range.of(1, parts)
       .array()
@@ -604,5 +600,54 @@ class Sand extends CanvasObject {
         this.#scene.addObject(removable);
       }, Mul.of(delay, 10)).do();
     });
+  }
+}
+
+class Sand extends CanvasObject {
+  static of = commonOf(Sand);
+  /**
+   * @type {number}
+   */
+  #partsCount = 10;
+  /**
+   * @type {number}
+   */
+  #streamsCount = 1;
+  /**
+   * @type {SandStream}
+   */
+  #sandStream;
+
+  /**
+   * @param {SandStream} sandStream
+   * @param {number} partsCount
+   * @param {number} streamsCount
+   */
+  constructor(
+    sandStream,
+    partsCount,
+    streamsCount,
+  ) {
+    super(...sandStream.position());
+    this.#partsCount = partsCount;
+    this.#streamsCount = streamsCount;
+    this.#sandStream = sandStream;
+  }
+
+  render() {
+    const speed = 4;
+    const dist = 30;
+    const partsForStream = RoundNumber.of(
+      Division.of(this.#partsCount, this.#streamsCount)
+    );
+    Range.of(1, this.#streamsCount)
+      .array()
+      .forEach(() => {
+        this.#sandStream.render(partsForStream, dist, speed);
+      });
+
+    this.#sandStream.scene().removeObject(this);
+
+    return this;
   }
 }
