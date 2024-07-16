@@ -1,12 +1,6 @@
 "use strict";
 
-const commonOf =
-  (classRef) =>
-  (...args) =>
-    new classRef(...args);
-
 class Canvas {
-  static of = commonOf(Canvas);
   #element;
   #selector;
   #context;
@@ -61,7 +55,7 @@ class CanvasObject {
   }
 }
 
-class PrimitiveAware {
+class PrimitiveAware extends Number{
   computeValue() {
     throw Error("not implemented!");
   }
@@ -96,32 +90,24 @@ class UnaryOperation extends PrimitiveAware {
 }
 
 class RandomNumber extends BinaryOperation {
-  static of = commonOf(RandomNumber);
-
   computeValue() {
     return this._operandOne + Math.random() * this._operandTwo;
   }
 }
 
 class RoundNumber extends UnaryOperation {
-  static of = commonOf(RoundNumber);
-
   computeValue() {
     return Math.round(this._operand);
   }
 }
 
 class FloorNumber extends UnaryOperation {
-  static of = commonOf(FloorNumber);
-
   computeValue() {
     return Math.floor(this._operand);
   }
 }
 
 class BottomLimitNumber extends BinaryOperation {
-  static of = commonOf(BottomLimitNumber);
-
   constructor(limit, value) {
     super(limit, value);
   }
@@ -134,31 +120,24 @@ class BottomLimitNumber extends BinaryOperation {
 }
 
 class Division extends BinaryOperation {
-  static of = commonOf(Division);
-
   computeValue() {
     return this._operandOne / this._operandTwo;
   }
 }
 
 class Sum extends BinaryOperation {
-  static of = commonOf(Sum);
-
   computeValue() {
     return this._operandOne + this._operandTwo;
   }
 }
 
 class Mul extends BinaryOperation {
-  static of = commonOf(Mul);
-
   computeValue() {
     return this._operandOne * this._operandTwo;
   }
 }
 
 class FPS {
-  static of = commonOf(FPS);
   #fps;
 
   constructor(fps) {
@@ -171,7 +150,6 @@ class FPS {
 }
 
 class Rect extends CanvasObject {
-  static of = commonOf(Rect);
   #width;
   #height;
   #color;
@@ -198,7 +176,6 @@ class Rect extends CanvasObject {
 }
 
 class Circle extends CanvasObject {
-  static of = commonOf(Circle);
   #radius;
   #color;
 
@@ -218,7 +195,6 @@ class Circle extends CanvasObject {
 }
 
 class Scene {
-  static of = commonOf(Scene);
   #canvasObjects;
   #canvas;
 
@@ -256,7 +232,6 @@ class Scene {
 }
 
 class Ticker {
-  static of = commonOf(Ticker);
   #delayMs;
   #tickFn;
 
@@ -278,7 +253,6 @@ class Ticker {
 }
 
 class RemoveAfterDelay extends CanvasObject {
-  static of = commonOf(RemoveAfterDelay);
   #targetObject;
   #removeDelay;
   #firstRenderTime;
@@ -315,7 +289,6 @@ class RemoveAfterDelay extends CanvasObject {
 }
 
 class FallParabolicAnimation extends CanvasObject {
-  static of = commonOf(FallParabolicAnimation);
   #targetObject;
   #distancePerTick;
   #ticker;
@@ -357,7 +330,6 @@ class FallParabolicAnimation extends CanvasObject {
 }
 
 class FallAnimation extends CanvasObject {
-  static of = commonOf(FallAnimation);
   #targetObject;
   #distancePerTick;
   #ticker;
@@ -386,7 +358,6 @@ class FallAnimation extends CanvasObject {
 }
 
 class Pointer {
-  static of = commonOf(Pointer);
   #originalEvent;
 
   constructor(originalEvent) {
@@ -398,21 +369,19 @@ class Pointer {
   }
 }
 
-class FnAdapter {
-  static of = commonOf(FnAdapter);
-  #fn;
+class ToObject {
+  #objectConstructor;
 
-  constructor(fn) {
-    this.#fn = fn;
+  constructor(objectConstructor) {
+    this.#objectConstructor = objectConstructor;
   }
 
-  adapted(event) {
-    return this.#fn(event);
+  object(...args) {
+    return new this.#objectConstructor(...args);
   }
 }
 
 class CanvasEvent {
-  static of = commonOf(CanvasEvent);
   /**
    * @type {Function[]}
    */
@@ -429,7 +398,7 @@ class CanvasEvent {
   /**
    * @param {Canvas} canvas
    * @param {string} eventName
-   * @param {Function[]} handlers
+   * @param {Handler[]} handlers
    */
   constructor(canvas, eventName, handlers) {
     this.#handlers = handlers;
@@ -438,13 +407,13 @@ class CanvasEvent {
   }
 
   /**
-   * @param {FnAdapter} eventAdapter
+   * @param {ToObject} eventAdapter
    * @returns
    */
-  watchEvent(adapter) {
+  watchEvent(toObject) {
     this.#canvas.element().addEventListener(this.#eventName, (event) => {
       this.#handlers.forEach((handler) => {
-        handler.do(adapter.adapted(event));
+        handler.do(toObject.object(event));
       });
     });
     return this;
@@ -452,7 +421,6 @@ class CanvasEvent {
 }
 
 class Handler {
-  static of = commonOf(Handler);
   #fn;
 
   /**
@@ -468,8 +436,6 @@ class Handler {
 }
 
 class Timeout extends Handler {
-  static of = commonOf(Timeout);
-
   /**
    * @param {Function} fn
    * @param {number} delay
@@ -480,7 +446,6 @@ class Timeout extends Handler {
 }
 
 class Range {
-  static of = commonOf(Range);
   /**
    * @type {number}
    */
@@ -511,7 +476,6 @@ class Range {
 }
 
 class SandStream extends CanvasObject {
-  static of = commonOf(SandStream);
   /**
    * @type {number}
    */
@@ -571,40 +535,39 @@ class SandStream extends CanvasObject {
    */
   render(parts, partsDelay, speedRange) {
     let nextDelay = 0;
-    const delays = Range.of(1, parts)
+    const delays = new Range(1, parts)
       .array()
       .map(() => {
-        const result = Sum.of(nextDelay, RandomNumber.of(0, partsDelay));
-        nextDelay += partsDelay;
+        const result = new Sum(nextDelay, new RandomNumber(0, partsDelay));
+        nextDelay = new Sum(Number(nextDelay), partsDelay);
         return result;
       });
     delays.forEach((delay) => {
-      Timeout.of(() => {
-        const figure = Circle.of(
-          RandomNumber.of(1, this.#size),
+      new Timeout(() => {
+        const figure = new Circle(
+          new RandomNumber(1, this.#size),
           this._top,
-          Sum.of(this._left, RandomNumber.of(0, this.#width)),
-          this.#colors[FloorNumber.of(RandomNumber.of(0, this.#colors.length))]
+          new Sum(this._left, new RandomNumber(0, this.#width)),
+          this.#colors[new FloorNumber(new RandomNumber(0, this.#colors.length))]
         );
-        const fallingRect = FallParabolicAnimation.of(
+        const fallingRect = new FallParabolicAnimation(
           figure,
           this.#ticker,
-          RandomNumber.of(speedRange, Mul.of(speedRange, 2)),
-          Mul.of(RandomNumber.of(-1, 2), 16)
+          new RandomNumber(speedRange, new Mul(speedRange, 2)),
+          new Mul(new RandomNumber(-1, 2), 16)
         );
-        const removable = RemoveAfterDelay.of(
+        const removable = new RemoveAfterDelay(
           fallingRect,
           this.#scene,
-          RandomNumber.of(this.#removeDelay, this.#removeDelay * 2)
+          new RandomNumber(this.#removeDelay, this.#removeDelay * 2)
         );
         this.#scene.addObject(removable);
-      }, Mul.of(delay, 10)).do();
+      }, new Mul(delay, 10)).do();
     });
   }
 }
 
 class Sand extends CanvasObject {
-  static of = commonOf(Sand);
   /**
    * @type {number}
    */
@@ -637,10 +600,10 @@ class Sand extends CanvasObject {
   render() {
     const speed = 4;
     const dist = 30;
-    const partsForStream = RoundNumber.of(
-      Division.of(this.#partsCount, this.#streamsCount)
+    const partsForStream = new RoundNumber(
+      new Division(this.#partsCount, this.#streamsCount)
     );
-    Range.of(1, this.#streamsCount)
+    new Range(1, this.#streamsCount)
       .array()
       .forEach(() => {
         this.#sandStream.render(partsForStream, dist, speed);

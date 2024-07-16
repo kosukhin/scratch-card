@@ -268,10 +268,10 @@ const once = (inFn) => {
 };
 
 // Клиентский код
-const fps = FPS.of(60);
-const canvas = Canvas.of(".the-dust-canvas");
-const scene = Scene.of(canvas);
-const ticker = Ticker.of(fps.ms(), scene.render.bind(scene));
+const fps = new FPS(60);
+const canvas = new Canvas(".the-dust-canvas");
+const scene = new Scene(canvas);
+const ticker = new Ticker(fps.ms(), scene.render.bind(scene));
 ticker.run();
 
 const sandColors = ["#222", "#444", "#666", "#888"];
@@ -288,8 +288,8 @@ scratch({
       return;
     }
 
-    const sand = Sand.of(
-      SandStream.of(
+    const sand = new Sand(
+      new SandStream(
         sandColors,
         imageSize.width,
         ticker,

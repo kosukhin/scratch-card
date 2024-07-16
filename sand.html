@@ -16,23 +16,23 @@
     <canvas id="canvas" width="500" height="500"></canvas>
     <script src="./classes.js" type="text/javascript"></script>
     <script type="text/javascript">
-        const fps = FPS.of(60);
-        const canvas = Canvas.of('#canvas');
-        const scene = Scene.of(canvas);
-        const ticker = Ticker.of(fps.ms(), scene.render.bind(scene));
+        const fps = new FPS(60);
+        const canvas = new Canvas('#canvas');
+        const scene = new Scene(canvas);
+        const ticker = new Ticker(fps.ms(), scene.render.bind(scene));
         const sandColors = ['#333', '#666'];
 
-        const canvasClickHandler = Handler.of((pointer) => {
-            const sand = Sand.of(
-                SandStream.of(sandColors, 30, ticker, scene, ...pointer.offset()),
+        const canvasClickHandler = new Handler((pointer) => {
+            const sand = new Sand(
+                new SandStream(sandColors, 30, ticker, scene, ...pointer.offset()),
                 10,
                 4
             );
             scene.addObject(sand);
         });
 
-        const canvasClickEvent = CanvasEvent.of(canvas, 'click', [canvasClickHandler]);
-        canvasClickEvent.watchEvent(FnAdapter.of(Pointer.of));
+        const canvasClickEvent = new CanvasEvent(canvas, 'click', [canvasClickHandler]);
+        canvasClickEvent.watchEvent(new ToObject(Pointer));
 
         ticker.run();
     </script>

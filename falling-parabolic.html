@@ -13,31 +13,31 @@
 </head>
 
 <body>
-    <canvas id="canvas" width="500" height="500"></canvas>
-    <script src="./classes.js" type="text/javascript"></script>
-    <script type="text/javascript">
-        const fps = FPS.of(60);
-        const canvas = Canvas.of('#canvas');
-        const scene = Scene.of(canvas);
-        const ticker = Ticker.of(fps.ms(), scene.render.bind(scene));
+<canvas id="canvas" width="500" height="500"></canvas>
+<script src="./classes.js" type="text/javascript"></script>
+<script type="text/javascript">
+    const fps = new FPS(60);
+    const canvas = new Canvas('#canvas');
+    const scene = new Scene(canvas);
+    const ticker = new Ticker(fps.ms(), scene.render.bind(scene));
 
-        const canvasClickHandler = Handler.of((pointer) => {
-            const rect = Rect.of(30, 30, ...pointer.offset(), 'orange');
-            const fallingRect = FallParabolicAnimation.of(
-                rect,
-                 ticker,
-                  8,
-                  Mul.of(RandomNumber.of(-1, 2), 32),
-                );
-            const removable  = RemoveAfterDelay.of(fallingRect, scene, 3000);
-            scene.addObject(removable);
-        });
+    const canvasClickHandler = new Handler((pointer) => {
+        const rect = new Rect(30, 30, ...pointer.offset(), 'orange');
+        const fallingRect = new FallParabolicAnimation(
+            rect,
+            ticker,
+            8,
+            new Mul(new RandomNumber(-1, 2), 32),
+        );
+        const removable = new RemoveAfterDelay(fallingRect, scene, 3000);
+        scene.addObject(removable);
+    });
 
-        const canvasClickEvent = CanvasEvent.of(canvas, 'click', [canvasClickHandler]);
-        canvasClickEvent.watchEvent(FnAdapter.of(Pointer.of));
+    const canvasClickEvent = new CanvasEvent(canvas, 'click', [canvasClickHandler]);
+    canvasClickEvent.watchEvent(new ToObject(Pointer));
 
-        ticker.run();
-    </script>
+    ticker.run();
+</script>
 </body>
 
 </html>
