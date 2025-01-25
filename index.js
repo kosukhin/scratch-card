@@ -66,8 +66,8 @@ const canvasFilledPixelsPercent = (inCanvasCtx, inFilledPixelsCount) => {
   return (
     inFilledPixelsCount >= 1
       ? (inFilledPixelsCount /
-          (inCanvasCtx.canvas.width * inCanvasCtx.canvas.height)) *
-        100
+        (inCanvasCtx.canvas.width * inCanvasCtx.canvas.height)) *
+      100
       : 0
   ).toPrecision(2);
 };
@@ -156,7 +156,7 @@ const scratchPercentReachedHandler = throttle((inOptions) => {
 
 const renderDustAnimation = throttle((afterDust) => {
   afterDust();
-}, 48);
+}, 16);
 
 let lastClearPercent = 0;
 const scratchMoveHandler = throttle((inOptions, inEvent) => {
@@ -277,7 +277,7 @@ ticker.run();
 const sandColors = ["#222", "#444", "#666", "#888"];
 scratch({
   canvasElement: document.querySelector(".the-card-canvas"),
-  image: "https://placehold.co/450x300/31343C/EEE",
+  image: "/450x300.png",
   reachPercent: 60,
   reachPercentHandler: once((percent) => {
     console.log("percent reached", percent);

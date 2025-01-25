@@ -60,6 +60,10 @@ class PrimitiveAware extends Number{
     throw Error("not implemented!");
   }
 
+  number() {
+    return this.computeValue();
+  }
+
   valueOf() {
     return this.computeValue();
   }
@@ -92,6 +96,17 @@ class UnaryOperation extends PrimitiveAware {
 class RandomNumber extends BinaryOperation {
   computeValue() {
     return this._operandOne + Math.random() * this._operandTwo;
+  }
+}
+
+class StableNumber extends UnaryOperation {
+  #stableValue = null;
+
+  computeValue() {
+    if (this.#stableValue === null) {
+      this.#stableValue = Number(this._operand);
+    }
+    return this.#stableValue;
   }
 }
 
@@ -479,7 +494,7 @@ class SandStream extends CanvasObject {
   /**
    * @type {number}
    */
-  #size = 1;
+  #size = 1.5;
   /**
    * @type {number}
    */
@@ -545,21 +560,21 @@ class SandStream extends CanvasObject {
     delays.forEach((delay) => {
       new Timeout(() => {
         const figure = new Circle(
-          new RandomNumber(1, this.#size),
+          new StableNumber(new RandomNumber(0.5, this.#size)),
           this._top,
-          new Sum(this._left, new RandomNumber(0, this.#width)),
-          this.#colors[new FloorNumber(new RandomNumber(0, this.#colors.length))]
+          new StableNumber(new Sum(this._left, new RandomNumber(0, this.#width))),
+          this.#colors[new StableNumber(new FloorNumber(new RandomNumber(0, this.#colors.length)))]
         );
         const fallingRect = new FallParabolicAnimation(
           figure,
           this.#ticker,
-          new RandomNumber(speedRange, new Mul(speedRange, 2)),
-          new Mul(new RandomNumber(-1, 2), 16)
+          new StableNumber(new RandomNumber(speedRange, new Mul(speedRange, 2))),
+          new Mul(new StableNumber(new RandomNumber(-1, 2)), 16)
         );
         const removable = new RemoveAfterDelay(
           fallingRect,
           this.#scene,
-          new RandomNumber(this.#removeDelay, this.#removeDelay * 2)
+          new StableNumber(new RandomNumber(this.#removeDelay, this.#removeDelay * 2))
         );
         this.#scene.addObject(removable);
       }, new Mul(delay, 10)).do();
