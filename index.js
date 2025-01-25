@@ -277,7 +277,7 @@ ticker.run();
 const sandColors = ["#222", "#444", "#666", "#888"];
 scratch({
   canvasElement: document.querySelector(".the-card-canvas"),
-  image: "/450x300.png",
+  image: "./450x300.png",
   reachPercent: 60,
   reachPercentHandler: once((percent) => {
     console.log("percent reached", percent);
